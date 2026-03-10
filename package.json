@@ -1,0 +1,8 @@
+{
+  "name": "taskforge",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "taskforge": "./src/index.js"
+  }
+}
