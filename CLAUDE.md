@@ -70,3 +70,8 @@ taskforge/
 - Valid statuses: `pending`, `done`
 - Dates stored as ISO 8601 strings
 - `deleteTask` returns the deleted task so callers can print its title
+
+## Development Notes
+- Always restart REPL after adding MCP servers, skills, or commands
+- Commit before big Claude Code sessions (git safety net)
+- Use /context to check token usage when session feels slow
