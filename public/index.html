@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskForge Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    /* Refresh button */
+    #refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1.1rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #refresh-btn:hover { background: #1d4ed8; }
+    #refresh-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    /* Stats bar */
+    #stats-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      flex: 1 1 120px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1;
+    }
+
+    .stat-card.total .stat-value  { color: #2563eb; }
+    .stat-card.done .stat-value   { color: #16a34a; }
+    .stat-card.pending .stat-value { color: #b45309; }
+
+    /* Error message */
+    #error-msg {
+      display: none;
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 0.85rem 1.1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Table wrapper */
+    #table-wrapper {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    /* Empty state */
+    #empty-msg {
+      display: none;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+
+    /* Task table */
+    #task-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    #task-table thead tr {
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    #task-table th {
+      padding: 0.65rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    #task-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      color: #334155;
+    }
+
+    #task-table tbody tr:last-child td { border-bottom: none; }
+
+    #task-table tbody tr:hover { background: #f8fafc; }
+
+    /* Done row title */
+    .title-done { text-decoration: line-through; color: #94a3b8; }
+
+    /* Priority badges */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge-high   { background: #fee2e2; color: #dc2626; }
+    .badge-medium { background: #fef9c3; color: #b45309; }
+    .badge-low    { background: #dcfce7; color: #16a34a; }
+
+    /* Status chip */
+    .status {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-done    { background: #d1fae5; color: #065f46; }
+
+    /* ID column */
+    .col-id { color: #94a3b8; font-size: 0.8rem; }
+
+    /* Date column */
+    .col-date { white-space: nowrap; color: #64748b; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>TaskForge Dashboard</h1>
+    <button id="refresh-btn">&#x21bb; Refresh</button>
+  </header>
+
+  <div id="stats-bar">
+    <div class="stat-card total">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-label">Done</div>
+      <div class="stat-value" id="stat-done">—</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value" id="stat-pending">—</div>
+    </div>
+  </div>
+
+  <div id="error-msg" role="alert"></div>
+
+  <div id="table-wrapper">
+    <div id="empty-msg">No tasks found.</div>
+    <table id="task-table" aria-label="Task list">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="task-tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const refreshBtn  = document.getElementById('refresh-btn');
+    const statTotal   = document.getElementById('stat-total');
+    const statDone    = document.getElementById('stat-done');
+    const statPending = document.getElementById('stat-pending');
+    const errorMsg    = document.getElementById('error-msg');
+    const taskTbody   = document.getElementById('task-tbody');
+    const taskTable   = document.getElementById('task-table');
+    const emptyMsg    = document.getElementById('empty-msg');
+
+    /**
+     * Formats an ISO 8601 date string into a short, readable date.
+     * @param {string} iso - ISO 8601 date string.
+     * @returns {string} Formatted date, e.g. "Mar 9, 2026".
+     */
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+      } catch {
+        return iso;
+      }
+    }
+
+    /**
+     * Shows an error message in the error banner.
+     * @param {string} message - The error text to display.
+     */
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+    }
+
+    /**
+     * Hides the error banner.
+     */
+    function clearError() {
+      errorMsg.textContent = '';
+      errorMsg.style.display = 'none';
+    }
+
+    /**
+     * Updates the stats bar with fetched counts.
+     * @param {{ total: number, done: number, pending: number }} stats
+     */
+    function renderStats(stats) {
+      statTotal.textContent   = stats.total;
+      statDone.textContent    = stats.done;
+      statPending.textContent = stats.pending;
+    }
+
+    /**
+     * Renders the task table rows from an array of task objects.
+     * Uses textContent exclusively for user-supplied data to prevent XSS.
+     * @param {Array<{id: number, title: string, priority: string, status: string, createdAt: string, notes?: string}>} tasks
+     */
+    function renderTasks(tasks) {
+      taskTbody.innerHTML = '';
+
+      if (tasks.length === 0) {
+        taskTable.style.display = 'none';
+        emptyMsg.style.display = 'block';
+        return;
+      }
+
+      taskTable.style.display = '';
+      emptyMsg.style.display = 'none';
+
+      for (const task of tasks) {
+        const tr = document.createElement('tr');
+
+        // ID
+        const tdId = document.createElement('td');
+        tdId.className = 'col-id';
+        tdId.textContent = task.id;
+        tr.appendChild(tdId);
+
+        // Title — strikethrough when done
+        const tdTitle = document.createElement('td');
+        if (task.status === 'done') {
+          tdTitle.className = 'title-done';
+        }
+        tdTitle.textContent = task.title;
+        tr.appendChild(tdTitle);
+
+        // Priority badge
+        const tdPriority = document.createElement('td');
+        const VALID_PRIORITIES = ['low', 'medium', 'high'];
+        const rawPriority = (task.priority || '').toLowerCase();
+        const priority = VALID_PRIORITIES.includes(rawPriority) ? rawPriority : 'medium';
+        const badge = document.createElement('span');
+        badge.className = 'badge badge-' + priority;
+        badge.textContent = priority;
+        tdPriority.appendChild(badge);
+        tr.appendChild(tdPriority);
+
+        // Status chip
+        const tdStatus = document.createElement('td');
+        const VALID_STATUSES = ['pending', 'done'];
+        const rawStatus = (task.status || '').toLowerCase();
+        const status = VALID_STATUSES.includes(rawStatus) ? rawStatus : 'pending';
+        const chip = document.createElement('span');
+        chip.className = 'status status-' + status;
+        chip.textContent = status;
+        tdStatus.appendChild(chip);
+        tr.appendChild(tdStatus);
+
+        // Created date
+        const tdDate = document.createElement('td');
+        tdDate.className = 'col-date';
+        tdDate.textContent = formatDate(task.createdAt);
+        tr.appendChild(tdDate);
+
+        taskTbody.appendChild(tr);
+      }
+    }
+
+    /**
+     * Fetches tasks and stats from the API concurrently and updates the UI.
+     * Shows an error banner if either request fails.
+     * @returns {Promise<void>}
+     */
+    async function loadData() {
+      clearError();
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Loading…';
+
+      try {
+        const [tasksRes, statsRes] = await Promise.all([
+          fetch('/api/tasks'),
+          fetch('/api/stats')
+        ]);
+
+        if (!tasksRes.ok) {
+          throw new Error('Failed to load tasks (HTTP ' + tasksRes.status + ')');
+        }
+        if (!statsRes.ok) {
+          throw new Error('Failed to load stats (HTTP ' + statsRes.status + ')');
+        }
+
+        const [tasks, stats] = await Promise.all([
+          tasksRes.json(),
+          statsRes.json()
+        ]);
+
+        renderStats(stats);
+        renderTasks(tasks);
+
+      } catch (err) {
+        showError('Could not load data: ' + err.message);
+        // Reset stat displays to indicate stale/unavailable data
+        statTotal.textContent   = '—';
+        statDone.textContent    = '—';
+        statPending.textContent = '—';
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '↻ Refresh';
+      }
+    }
+
+    refreshBtn.addEventListener('click', loadData);
+
+    // Load on page start
+    loadData();
+  </script>
+</body>
+</html>
