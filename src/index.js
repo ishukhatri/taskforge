@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { addTask, listTasks, completeTask, deleteTask, clearTasks, searchTasks } from './tasks.js';
+import { addTask, listTasks, completeTask, deleteTask, clearTasks, searchTasks, noteTask } from './tasks.js';
 
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
@@ -11,6 +11,7 @@ Usage:
   taskforge delete <id>                 Delete a task
   taskforge clear                       Remove all tasks
   taskforge search <query>              Search tasks by title
+  taskforge note <id> <text>            Add or update notes on a task
 `.trim();
 
 /**
@@ -22,6 +23,9 @@ function printTask(task) {
   const pri = task.priority ?? 'medium';
   const date = new Date(task.createdAt).toLocaleDateString();
   console.log(`${status} ${task.id}  ${task.title}  [${pri}]  (${date})`);
+  if (task.notes) {
+    console.log(`    Notes: ${task.notes}`);
+  }
 }
 
 /**
@@ -98,6 +102,18 @@ async function main() {
       } else {
         results.forEach(printTask);
       }
+      break;
+    }
+
+    case 'note': {
+      const id = args[0];
+      const text = args.slice(1).join(' ');
+      if (!id || !text) {
+        console.error('Error: please provide a task ID and note text.');
+        process.exit(1);
+      }
+      const task = await noteTask(id, text);
+      console.log(`Note added to "${task.title}": ${task.notes}`);
       break;
     }
 
