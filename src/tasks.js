@@ -9,6 +9,7 @@ const VALID_PRIORITIES = ['low', 'medium', 'high'];
  * @property {'low'|'medium'|'high'} priority - Task priority.
  * @property {'pending'|'done'} status - Current status.
  * @property {string} createdAt - ISO 8601 creation timestamp.
+ * @property {string} [notes] - Optional freeform notes for the task.
  */
 
 /**
@@ -30,8 +31,25 @@ export async function addTask(title, priority = 'medium') {
     priority,
     status: 'pending',
     createdAt: new Date().toISOString(),
+    notes: '',
   };
   tasks.push(task);
+  await writeTasks(tasks);
+  return task;
+}
+
+/**
+ * Sets or replaces the notes on an existing task.
+ * @param {number} id - The task ID to update.
+ * @param {string} notes - The notes text to store on the task.
+ * @returns {Promise<Task>} The updated task.
+ * @throws {Error} If no task with the given ID exists.
+ */
+export async function noteTask(id, notes) {
+  const tasks = await readTasks();
+  const task = tasks.find((t) => t.id === Number(id));
+  if (!task) throw new Error(`Task not found: ${id}`);
+  task.notes = notes;
   await writeTasks(tasks);
   return task;
 }
