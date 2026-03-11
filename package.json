@@ -3,6 +3,19 @@
   "version": "1.0.0",
   "type": "module",
   "bin": {
-    "taskforge": "./src/index.js"
+    "taskforge": "src/index.js"
+  },
+  "description": "A fast, minimal CLI task manager for developers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0"
   }
 }

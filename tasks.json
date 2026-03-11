@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "Buy groceries",
+    "priority": "high",
+    "status": "pending",
+    "createdAt": "2026-03-10T12:13:22.925Z"
+  },
+  {
+    "id": 2,
+    "title": "Learn Claude Code",
+    "priority": "medium",
+    "status": "pending",
+    "createdAt": "2026-03-10T12:13:27.982Z"
+  }
+]

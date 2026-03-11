@@ -50,6 +50,17 @@ export async function listTasks(status, priority) {
 }
 
 /**
+ * Searches tasks by title (case-insensitive substring match).
+ * @param {string} query - The search string to match against task titles.
+ * @returns {Promise<Task[]>} Array of matching tasks.
+ */
+export async function searchTasks(query) {
+  const tasks = await readTasks();
+  const lower = query.toLowerCase();
+  return tasks.filter((t) => t.title.toLowerCase().includes(lower));
+}
+
+/**
  * Marks a task as done by its ID.
  * @param {number} id - The task ID to complete.
  * @returns {Promise<Task>} The updated task.

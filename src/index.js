@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { addTask, listTasks, completeTask, deleteTask, clearTasks } from './tasks.js';
+import { addTask, listTasks, completeTask, deleteTask, clearTasks, searchTasks } from './tasks.js';
 
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
@@ -10,6 +10,7 @@ Usage:
   taskforge done <id>                   Mark a task as done
   taskforge delete <id>                 Delete a task
   taskforge clear                       Remove all tasks
+  taskforge search <query>              Search tasks by title
 `.trim();
 
 /**
@@ -82,6 +83,21 @@ async function main() {
       }
       const deleted = await deleteTask(id);
       console.log(`Deleted: "${deleted.title}"`);
+      break;
+    }
+
+    case 'search': {
+      const query = args.join(' ');
+      if (!query) {
+        console.error('Error: please provide a search query.');
+        process.exit(1);
+      }
+      const results = await searchTasks(query);
+      if (results.length === 0) {
+        console.log('No tasks found.');
+      } else {
+        results.forEach(printTask);
+      }
       break;
     }
 
